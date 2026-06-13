@@ -3,13 +3,17 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - "v*.*.*"
+      - "v*"
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
+
     permissions:
       id-token: write
+
+    environment:
+      name: pypi
 
     steps:
       - uses: actions/checkout@v4
