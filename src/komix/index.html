@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>KoMiX</title>
+        <style>
+            body {
+                font-family: system-ui, Arial;
+                margin: 0;
+                padding: 0;
+            }
+            .poster-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 12px;
+                padding: 12px;
+            }
+
+            .card {
+                position: relative;
+                background: #f6f6f6;
+                border-radius: 6px;
+                overflow: hidden;
+                cursor: pointer;
+                transition:
+                    transform 0.12s ease,
+                    box-shadow 0.12s ease;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .card:hover {
+                transform: translateY(-6px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            }
+
+            .card.selected {
+                outline: 3px solid #2680eb;
+            }
+
+            .cover {
+                height: 260px;
+                background: #ddd center/cover no-repeat;
+                display: block;
+            }
+
+            .title {
+                padding: 8px;
+                font-weight: 600;
+                font-size: 14px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .icon-btn {
+                position: absolute;
+                width: 28px;
+                height: 28px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(255, 255, 255, 0.9);
+                border-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+            }
+            .icon-info {
+                left: 8px;
+                top: 8px;
+            }
+            .icon-folder {
+                right: 8px;
+                top: 8px;
+            }
+
+            .bottom-bar {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                height: 56px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 16px;
+                background: rgba(255, 255, 255, 0.95);
+                border-top: 1px solid #eee;
+            }
+
+            .left-group,
+            .right-group {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+
+            button {
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid #ddd;
+                background: #fff;
+                cursor: pointer;
+            }
+            button.primary {
+                background: #2680eb;
+                color: #fff;
+                border-color: transparent;
+            }
+
+            .empty-cover {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #777;
+                height: 100%;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="grid" class="poster-grid"></div>
+
+        <div class="bottom-bar">
+            <div class="left-group">
+                <label style="display: flex; align-items: center; gap: 8px"
+                    ><input id="selectAll" type="checkbox" /> 全选</label
+                >
+                <div id="selectedCount">已选 0 项</div>
+            </div>
+            <div class="right-group">
+                <button id="scrapeBtn" class="primary" disabled>
+                    刮削所选项目
+                </button>
+            </div>
+        </div>
+
+
+        <script>
+            const grid = document.getElementById("grid");
+            const selectAll = document.getElementById("selectAll");
+            const selectedCount = document.getElementById("selectedCount");
+            const scrapeBtn = document.getElementById("scrapeBtn");
+
+            let items = [];
+
+            function setSelectedCount() {
+                const n = items.filter((i) => i.selected).length;
+                selectedCount.textContent = `已选 ${n} 项`;
+                scrapeBtn.disabled = n === 0;
+                selectAll.checked = n === items.length && items.length > 0;
+            }
+
+            // currentRoot persisted in localStorage; prompt user for rootdir if missing
+            let currentRoot = localStorage.getItem('komix.rootdir') || '';
+            if (!currentRoot) {
+                const v = prompt('输入漫画库根目录（例如 /comics 或 C:\\comics）');
+                if (v && v.trim()) {
+                    currentRoot = v.trim();
+                    localStorage.setItem('komix.rootdir', currentRoot);
+                }
+            }
+
+            async function load(rootdir) {
+                rootdir = rootdir || currentRoot;
+                if (!rootdir) return;
+                const q = encodeURIComponent(rootdir);
+                const res = await fetch(`/api/comics?rootdir=${q}`);
+                if (!res.ok) {
+                    alert('获取目录失败: ' + res.status + ' ' + res.statusText);
+                    return;
+                }
+                const data = await res.json();
+                // data is expected to be an array of directory paths
+                items = data.map((d) => ({ dir: String(d), selected: false, info: null, cover: null }));
+                renderGrid();
+            }
+
+            function renderGrid() {
+                grid.innerHTML = "";
+                items.forEach((it, idx) => {
+                    const card = document.createElement("div");
+                    card.className = "card";
+                    if (it.selected) card.classList.add("selected");
+
+                    // cover
+                    const cover = document.createElement("div");
+                    cover.className = "cover";
+                    if (it.cover) {
+                        cover.style.backgroundImage = `url(${it.cover})`;
+                    } else {
+                        cover.innerHTML =
+                            '<div class="empty-cover">无封面</div>';
+                    }
+                    card.appendChild(cover);
+
+                    // title
+                    const title = document.createElement("div");
+                    title.className = "title";
+                    title.textContent = it.info?.title || extractName(it.dir);
+                    card.appendChild(title);
+
+                    // icons
+                    const infoIcon = document.createElement("div");
+                    infoIcon.className = "icon-btn icon-info";
+                    infoIcon.innerHTML = "i";
+                    infoIcon.title = "信息";
+                    infoIcon.onclick = (e) => {
+                        e.stopPropagation();
+                        showInfo(it);
+                    };
+                    card.appendChild(infoIcon);
+
+                    const folderIcon = document.createElement("div");
+                    folderIcon.className = "icon-btn icon-folder";
+                    folderIcon.innerHTML = "📁";
+                    folderIcon.title = "在文件管理器中打开";
+                    folderIcon.onclick = (e) => {
+                        e.stopPropagation();
+                        openFolder(it.dir);
+                    };
+                    card.appendChild(folderIcon);
+
+                    // click selects
+                    card.onclick = async (e) => {
+                        // if info or folder clicked, those handlers already stopPropagation
+                        it.selected = !it.selected;
+                        card.classList.toggle("selected", it.selected);
+                        setSelectedCount();
+                    };
+
+                    grid.appendChild(card);
+
+                    // load info and cover asynchronously
+                    fetchInfoAndCover(it, cover, title);
+                });
+                setSelectedCount();
+            }
+
+            function extractName(dir) {
+                try {
+                    return dir.split("/").filter(Boolean).pop();
+                } catch (e) {
+                    return dir;
+                }
+            }
+
+            async function fetchInfoAndCover(it, coverElem, titleElem) {
+                try {
+                    const q = encodeURIComponent(it.dir);
+                    const infoRes = await fetch(`/api/comicinfo?dirpath=${q}`);
+                    if (infoRes.ok) {
+                        it.info = await infoRes.json();
+                        titleElem.textContent =
+                            it.info.title || extractName(it.dir);
+                    }
+                } catch (e) {
+                    /* ignore */
+                }
+
+                try {
+                    const q = encodeURIComponent(it.dir);
+                    const covRes = await fetch(`/api/cover?dirpath=${q}`);
+                    if (covRes.ok) {
+                        const blob = await covRes.blob();
+                        if (blob.size > 0) {
+                            it.cover = URL.createObjectURL(blob);
+                            coverElem.style.backgroundImage = `url(${it.cover})`;
+                            coverElem.innerHTML = "";
+                        }
+                    }
+                } catch (e) {
+                    /* ignore */
+                }
+            }
+
+            function showInfo(it) {
+                const info = it.info || { title: extractName(it.dir) };
+                const lines = [];
+                for (const [k, v] of Object.entries(info)) {
+                    let val = v;
+                    if (Array.isArray(v)) val = v.join(', ');
+                    if (val === null || val === undefined) val = '';
+                    const key = String(k).charAt(0).toUpperCase() + String(k).slice(1);
+                    lines.push(`${key}：${val}`);
+                }
+                alert(lines.join('\n'));
+            }
+
+
+            function openFolder(dir) {
+                // 尝试用 file:// 打开（浏览器可能阻止）
+                const u = "file://" + dir;
+                try {
+                    window.open(u);
+                } catch (e) {
+                    alert("无法打开文件夹: " + dir);
+                }
+            }
+
+            selectAll.addEventListener("change", (e) => {
+                const v = e.target.checked;
+                items.forEach((i) => (i.selected = v));
+                renderGrid();
+            });
+
+            scrapeBtn.addEventListener("click", async () => {
+                const toScrape = items.filter((i) => i.selected);
+                scrapeBtn.disabled = true;
+                scrapeBtn.textContent = "刮削中...";
+                for (const it of toScrape) {
+                    try {
+                        const q = encodeURIComponent(it.dir);
+                        await fetch(`/api/scrape?dirpath=${q}`, {
+                            method: "PUT",
+                        });
+                    } catch (e) {
+                        console.error("scrape failed", it.dir, e);
+                    }
+                }
+                scrapeBtn.textContent = "刮削所选项目";
+                scrapeBtn.disabled = false;
+                // refresh covers/info for scraped items
+                toScrape.forEach((i) => {
+                    i.info = null;
+                    if (i.cover) {
+                        URL.revokeObjectURL(i.cover);
+                        i.cover = null;
+                    }
+                });
+                renderGrid();
+            });
+
+            // auto-load if a rootdir was remembered or provided by prompt
+            if (currentRoot) load(currentRoot);
+        </script>
+    </body>
+</html>
