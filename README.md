@@ -22,7 +22,7 @@ pip install komix
 ### 启动服务
 
 ```bash
-komix serve                    # 默认 http://127.0.0.1:7788
+komix serve # 默认 http://127.0.0.1:7788
 komix serve --host 0.0.0.0 --port 8080
 ```
 
