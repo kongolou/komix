@@ -17,10 +17,12 @@ pm.load_setuptools_entrypoints("komix")
 async def read_comicinfo(xmlpath: Path) -> ComicInfo:
     async with aiofiles.open(xmlpath, "r") as f:
         xml = await f.read()
+    if not xml:
+        return ComicInfo()
     root = ET.fromstring(xml)
     return ComicInfo(
         title=root.findtext("Title", default=""),
-        id=root.findtext("ID", default=""),
+        id=root.findtext("Id", default=""),
         author=root.findtext("Author", default=""),
         summary=root.findtext("Summary", default=""),
         tags=root.findtext("Tags", default="").split(", "),
@@ -30,12 +32,12 @@ async def read_comicinfo(xmlpath: Path) -> ComicInfo:
 async def _write_comicinfo(comicinfo: ComicInfo, xmlpath: Path):
     root = ET.Element("ComicInfo")
     ET.SubElement(root, "Title").text = comicinfo.title
-    ET.SubElement(root, "ID").text = comicinfo.id
+    ET.SubElement(root, "Id").text = comicinfo.id
     ET.SubElement(root, "Author").text = comicinfo.author
     ET.SubElement(root, "Summary").text = comicinfo.summary
     ET.SubElement(root, "Tags").text = ", ".join(comicinfo.tags)
     async with aiofiles.open(xmlpath, "w") as f:
-        await f.write(ET.tostring(root, encoding="utf-8"))
+        await f.write(ET.tostring(root, encoding="unicode"))
 
 
 async def _download_cover(url: str, jpgpath: Path):
@@ -46,12 +48,20 @@ async def _download_cover(url: str, jpgpath: Path):
 
 
 async def scrape_by_dirname(dirpath: Path):
-    comics = pm.hook.search(query=dirpath.name)
+    results = pm.hook.search(query=dirpath.name)
+    if not results:
+        return
+    comics = results[0]
     if not comics:
         return
+    comic0_id = comics[0].id
 
-    comic0 = comics[0]
-    comicinfo = pm.hook.fetch_comicinfo(comic_id=comic0.id)
-    cover_url = pm.hook.fetch_cover_url(comic_id=comic0.id)
-    await _write_comicinfo(comicinfo, dirpath / "ComicInfo.xml")
-    await _download_cover(cover_url, dirpath / "cover.jpg")
+    results = pm.hook.fetch_comicinfo(comic_id=comic0_id)
+    if results:
+        comicinfo = results[0]
+        await _write_comicinfo(comicinfo, dirpath / "ComicInfo.xml")
+
+    results = pm.hook.fetch_cover_url(comic_id=comic0_id)
+    if results:
+        cover_url = results[0]
+        await _download_cover(cover_url, dirpath / "cover.jpg")
