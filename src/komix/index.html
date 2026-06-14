@@ -8,7 +8,8 @@
             body {
                 font-family: system-ui, Arial;
                 margin: 0;
-                padding: 0;
+                /* 给底部悬停菜单栏预留空间，避免海报墙内容被遮挡 */
+                padding: 0 0 80px 0;
             }
             .poster-grid {
                 display: grid;
@@ -41,7 +42,8 @@
             }
 
             .cover {
-                height: 260px;
+                width: 100%;
+                aspect-ratio: 3 / 4;
                 background: #ddd center/cover no-repeat;
                 display: block;
             }
@@ -96,7 +98,6 @@
                 gap: 12px;
             }
 
-
             button {
                 padding: 8px 12px;
                 border-radius: 6px;
@@ -136,7 +137,6 @@
             </div>
         </div>
 
-
         <script>
             const grid = document.getElementById("grid");
             const selectAll = document.getElementById("selectAll");
@@ -153,12 +153,14 @@
             }
 
             // currentRoot persisted in localStorage; prompt user for rootdir if missing
-            let currentRoot = localStorage.getItem('komix.rootdir') || '';
+            let currentRoot = localStorage.getItem("komix.rootdir") || "";
             if (!currentRoot) {
-                const v = prompt('输入漫画库根目录（例如 /comics 或 C:\\comics）');
+                const v = prompt(
+                    "输入漫画库根目录（例如 /comics 或 C:\\comics）",
+                );
                 if (v && v.trim()) {
                     currentRoot = v.trim();
-                    localStorage.setItem('komix.rootdir', currentRoot);
+                    localStorage.setItem("komix.rootdir", currentRoot);
                 }
             }
 
@@ -168,12 +170,17 @@
                 const q = encodeURIComponent(rootdir);
                 const res = await fetch(`/api/comics?rootdir=${q}`);
                 if (!res.ok) {
-                    alert('获取目录失败: ' + res.status + ' ' + res.statusText);
+                    alert("获取目录失败: " + res.status + " " + res.statusText);
                     return;
                 }
                 const data = await res.json();
                 // data is expected to be an array of directory paths
-                items = data.map((d) => ({ dir: String(d), selected: false, info: null, cover: null }));
+                items = data.map((d) => ({
+                    dir: String(d),
+                    selected: false,
+                    info: null,
+                    cover: null,
+                }));
                 renderGrid();
             }
 
@@ -204,7 +211,7 @@
                     // icons
                     const infoIcon = document.createElement("div");
                     infoIcon.className = "icon-btn icon-info";
-                    infoIcon.innerHTML = "i";
+                    infoIcon.innerHTML = "💬";
                     infoIcon.title = "信息";
                     infoIcon.onclick = (e) => {
                         e.stopPropagation();
@@ -215,7 +222,7 @@
                     const folderIcon = document.createElement("div");
                     folderIcon.className = "icon-btn icon-folder";
                     folderIcon.innerHTML = "📁";
-                    folderIcon.title = "在文件管理器中打开";
+                    folderIcon.title = "查看文件路径";
                     folderIcon.onclick = (e) => {
                         e.stopPropagation();
                         openFolder(it.dir);
@@ -280,23 +287,17 @@
                 const lines = [];
                 for (const [k, v] of Object.entries(info)) {
                     let val = v;
-                    if (Array.isArray(v)) val = v.join(', ');
-                    if (val === null || val === undefined) val = '';
-                    const key = String(k).charAt(0).toUpperCase() + String(k).slice(1);
+                    if (Array.isArray(v)) val = v.join(", ");
+                    if (val === null || val === undefined) val = "";
+                    const key =
+                        String(k).charAt(0).toUpperCase() + String(k).slice(1);
                     lines.push(`${key}：${val}`);
                 }
-                alert(lines.join('\n'));
+                alert(lines.join("\n"));
             }
 
-
             function openFolder(dir) {
-                // 尝试用 file:// 打开（浏览器可能阻止）
-                const u = "file://" + dir;
-                try {
-                    window.open(u);
-                } catch (e) {
-                    alert("无法打开文件夹: " + dir);
-                }
+                alert("文件夹路径：" + dir);
             }
 
             selectAll.addEventListener("change", (e) => {

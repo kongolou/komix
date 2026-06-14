@@ -48,20 +48,20 @@ async def _download_cover(url: str, jpgpath: Path):
 
 
 async def scrape_by_dirname(dirpath: Path):
-    results = pm.hook.search(query=dirpath.name)
-    if not results:
+    s_results = pm.hook.search(query=dirpath.name)
+    if not s_results:
         return
-    comics = results[0]
+    comics = s_results[0]
     if not comics:
         return
     comic0_id = comics[0].id
 
-    results = pm.hook.fetch_comicinfo(comic_id=comic0_id)
-    if results:
-        comicinfo = results[0]
+    fc_results = pm.hook.fetch_comicinfo(comic_id=comic0_id)
+    if fc_results:
+        comicinfo = fc_results[0]
         await _write_comicinfo(comicinfo, dirpath / "ComicInfo.xml")
 
-    results = pm.hook.fetch_cover_url(comic_id=comic0_id)
-    if results:
-        cover_url = results[0]
+    fcu_results = pm.hook.fetch_cover_url(comic_id=comic0_id)
+    if fcu_results:
+        cover_url = fcu_results[0]
         await _download_cover(cover_url, dirpath / "cover.jpg")
