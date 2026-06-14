@@ -250,7 +250,7 @@ class MySource:
 ## 开发
 
 ```bash
-git clone https://github.com/user/komix.git
+git clone https://github.com/kongolou/komix.git
 cd komix
 uv sync                    # 安装依赖（含开发依赖）
 uv run komix serve         # 启动开发服务器
