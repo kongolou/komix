@@ -7,6 +7,6 @@ from pydantic.dataclasses import dataclass
 class ComicInfo:
     title: str = ""
     id: str = ""
-    author: str = ""
+    authors: list[str] = field(default_factory=list)
     summary: str = ""
     tags: list[str] = field(default_factory=list)

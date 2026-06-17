@@ -4,7 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "komix"
-version = "0.2.0"
+authors = [
+    {name = "kongolou", email = "kongolou@outlook.com"}
+]
+maintainers = [
+    {name = "kongolou", email = "kongolou@outlook.com"}
+]
+version = "0.3.0"
 description = "Lightweight Comic Book Manager"
 readme = "README.md"
 license = "MIT"

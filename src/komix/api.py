@@ -23,7 +23,7 @@ async def read_comicinfo(xmlpath: Path) -> ComicInfo:
     return ComicInfo(
         title=root.findtext("Title", default=""),
         id=root.findtext("Id", default=""),
-        author=root.findtext("Author", default=""),
+        authors=root.findtext("Authors", default="").split(", "),
         summary=root.findtext("Summary", default=""),
         tags=root.findtext("Tags", default="").split(", "),
     )
@@ -33,7 +33,7 @@ async def _write_comicinfo(comicinfo: ComicInfo, xmlpath: Path):
     root = ET.Element("ComicInfo")
     ET.SubElement(root, "Title").text = comicinfo.title
     ET.SubElement(root, "Id").text = comicinfo.id
-    ET.SubElement(root, "Author").text = comicinfo.author
+    ET.SubElement(root, "Authors").text = ", ".join(comicinfo.authors)
     ET.SubElement(root, "Summary").text = comicinfo.summary
     ET.SubElement(root, "Tags").text = ", ".join(comicinfo.tags)
     async with aiofiles.open(xmlpath, "w") as f:
