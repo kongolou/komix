@@ -4,36 +4,12 @@ hookspec = pluggy.HookspecMarker("komix")
 
 
 @hookspec
-def search(query: str):
-    """Search for comics matching the given query.
+def scrape(title: str):
+    """Scrape for a comic matching the given title.
 
     Args:
-        query (str): The search query.
+        title (str): The title of the comic.
 
     Returns:
-        list[ComicInfo]: A list of comics matching the query.
-    """
-
-
-@hookspec
-def fetch_comicinfo(comic_id: str):
-    """Get the comic info for the given comic ID.
-
-    Args:
-        comic_id (str): The comic ID.
-
-    Returns:
-        ComicInfo: The comic info.
-    """
-
-
-@hookspec
-def fetch_cover_url(comic_id: str):
-    """Get the cover URL for the given comic ID.
-
-    Args:
-        comic_id (str): The comic ID.
-
-    Returns:
-        str: The cover URL.
+        tuple[ComicInfo, str]: A tuple containing the comic info and the cover URL.
     """

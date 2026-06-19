@@ -1,11 +1,10 @@
-import asyncio
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Response
 from fastapi.responses import FileResponse
+from kominfo import ComicInfo, read_comic_info
 
-from .api import read_comicinfo, scrape_by_dirname
-from .comicinfo import ComicInfo
+from .api import scrape_by_dirname
 
 router = APIRouter()
 
@@ -38,7 +37,7 @@ async def get_comicinfo(dirpath: str = Query(None)):
     xmlpath = Path(dirpath) / "ComicInfo.xml"
     if not xmlpath.exists():
         raise HTTPException(status_code=404, detail="ComicInfo.xml not found")
-    return await read_comicinfo(xmlpath)
+    return await read_comic_info(xmlpath)
 
 
 @router.get("/api/cover")
