@@ -1,9 +1,6 @@
 import typer
-import uvicorn
-from fastapi import FastAPI
 
 from . import __version__
-from .routes import router
 
 app = typer.Typer()
 
@@ -21,10 +18,19 @@ def serve(host: str = "127.0.0.1", port: int = 7788):
     """
     Serve the KoMiX web UI on the given host and port.
     """
-    webapp = FastAPI(title="KoMiX")
-    webapp.include_router(router)
+    import uvicorn
+    from fastapi import FastAPI
+    from fastapi.staticfiles import StaticFiles
+
+    from .routes import STATIC_DIR, router
+
+    web_app = FastAPI(title="KoMiX")
+    web_app.include_router(router)
+    web_app.mount(
+        "/static", StaticFiles(directory=STATIC_DIR, html=True), name="static"
+    )
     typer.secho(f"Serving KoMiX at http://{host}:{port}", fg=typer.colors.GREEN)
-    uvicorn.run(webapp, host=host, port=port)
+    uvicorn.run(web_app, host=host, port=port)
 
 
 if __name__ == "__main__":

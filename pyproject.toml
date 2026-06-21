@@ -10,7 +10,7 @@ authors = [
 maintainers = [
     {name = "kongolou", email = "kongolou@outlook.com"}
 ]
-version = "0.4.1"
+version = "0.5.0"
 description = "Lightweight Comic Book Manager"
 readme = "README.md"
 license = "MIT"
@@ -19,7 +19,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Framework :: FastAPI",
-    "Development Status :: 3 - Alpha"
+    "Development Status :: 4 - Beta"
 ]
 keywords = ["pluggy", "fastapi", "ACGN", "comic"]
 requires-python = ">=3.12"

@@ -6,12 +6,14 @@ from kominfo import ComicInfo, read_comic_info
 
 from .api import scrape_by_dirname
 
+STATIC_DIR = Path(__file__).parent / "static"
+
 router = APIRouter()
 
 
 @router.get("/")
 async def get_root():
-    idx = Path(__file__).parent / "index.html"
+    idx = STATIC_DIR / "index.html"
     if not idx.exists():
         raise HTTPException(status_code=404, detail="index.html not found")
     return FileResponse(idx, media_type="text/html")
@@ -19,7 +21,7 @@ async def get_root():
 
 @router.get("/favicon.ico")
 async def get_favicon():
-    ico = Path(__file__).parent / "favicon.ico"
+    ico = STATIC_DIR / "favicon.ico"
     if not ico.exists():
         raise HTTPException(status_code=404, detail="favicon.ico not found")
     return FileResponse(ico, media_type="image/x-icon")
