@@ -10,7 +10,7 @@ authors = [
 maintainers = [
     {name = "kongolou", email = "kongolou@outlook.com"}
 ]
-version = "0.5.1"
+version = "0.5.2"
 description = "Lightweight Comic Book Manager"
 readme = "README.md"
 license = "MIT"
