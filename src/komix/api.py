@@ -16,6 +16,8 @@ async def _download_cover(jpgpath: Path, url: str):
     async with aiofiles.open(jpgpath, "wb") as f:
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
+                if response.status != 200:
+                    return
                 await f.write(await response.read())
 
 
